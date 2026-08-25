@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { getApiUrl } from "../config/api";
 
 export interface UserProfile {
   id: string;
@@ -40,7 +41,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const syncUserToBackend = async (profile: UserProfile) => {
     try {
-      await fetch("/api/users/sync", {
+      await fetch(getApiUrl("/api/users/sync"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

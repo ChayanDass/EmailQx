@@ -7,6 +7,7 @@ import { EmailList } from "./components/EmailList";
 import { ScheduleModal } from "./components/ScheduleModal";
 import { EmailDetailModal } from "./components/EmailDetailModal";
 import { EmailItem, SystemStats, HealthStatus, AttachmentData } from "./types";
+import { getApiUrl } from "./config/api";
 
 // ── URL helpers ────────────────────────────────────────────────────────────────
 
@@ -76,7 +77,7 @@ export const AppContent: React.FC = () => {
 
   const fetchHealth = useCallback(async () => {
     try {
-      const res = await fetch("/api/health");
+      const res = await fetch(getApiUrl("/api/health"));
       if (res.ok) setHealth(await res.json());
     } catch {
       setHealth(null);
@@ -85,7 +86,7 @@ export const AppContent: React.FC = () => {
 
   const fetchStats = useCallback(async () => {
     try {
-      const res = await fetch("/api/stats", { headers: userHeaders });
+      const res = await fetch(getApiUrl("/api/stats"), { headers: userHeaders });
       if (res.ok) {
         const data = await res.json();
         setStats(data.stats);
@@ -102,7 +103,7 @@ export const AppContent: React.FC = () => {
         if (tab !== "ALL") query.append("status", tab);
         if (search.trim()) query.append("search", search.trim());
 
-        const res = await fetch(`/api/emails?${query.toString()}`, { headers: userHeaders });
+        const res = await fetch(getApiUrl(`/api/emails?${query.toString()}`), { headers: userHeaders });
         if (res.ok) {
           const data = await res.json();
           const list: EmailItem[] = data.emails;
@@ -233,7 +234,7 @@ export const AppContent: React.FC = () => {
     scheduledAt: string;
     attachments?: AttachmentData[];
   }) => {
-    const res = await fetch("/api/emails/schedule", {
+    const res = await fetch(getApiUrl("/api/emails/schedule"), {
       method: "POST",
       headers: { "Content-Type": "application/json", ...userHeaders },
       body: JSON.stringify(payload),
@@ -258,7 +259,7 @@ export const AppContent: React.FC = () => {
   };
 
   const handleRescheduleSubmit = async (id: string, scheduledAt: string) => {
-    const res = await fetch(`/api/emails/${id}/reschedule`, {
+    const res = await fetch(getApiUrl(`/api/emails/${id}/reschedule`), {
       method: "POST",
       headers: { "Content-Type": "application/json", ...userHeaders },
       body: JSON.stringify({ scheduledAt }),
@@ -274,7 +275,7 @@ export const AppContent: React.FC = () => {
   const handleCancelEmail = async (id: string) => {
     if (!window.confirm("Are you sure you want to cancel this scheduled email?")) return;
     try {
-      const res = await fetch(`/api/emails/${id}/cancel`, {
+      const res = await fetch(getApiUrl(`/api/emails/${id}/cancel`), {
         method: "POST",
         headers: userHeaders,
       });
