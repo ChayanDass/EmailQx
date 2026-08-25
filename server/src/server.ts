@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import emailRoutes from "./routes/email.routes";
+import apiRouter from "./routes";
 import { emailWorker, syncPendingJobsOnStartup } from "./queue/email.worker";
 import { prisma } from "./config/prisma";
 import { redisClient } from "./config/redis";
@@ -16,7 +16,7 @@ app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
 // API Routes
-app.use("/api", emailRoutes);
+app.use("/api", apiRouter);
 
 // Root route welcome info
 app.get("/", (_req, res) => {

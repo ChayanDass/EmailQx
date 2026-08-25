@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { getApiUrl } from "../config/api";
+import { ApiService } from "../services/api.service";
 
 export interface UserProfile {
   id: string;
@@ -33,27 +33,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     if (user) {
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(user));
-      syncUserToBackend(user);
+      ApiService.syncUser(user.email, user.name, user.picture);
     } else {
       localStorage.removeItem(LOCAL_STORAGE_KEY);
     }
   }, [user]);
-
-  const syncUserToBackend = async (profile: UserProfile) => {
-    try {
-      await fetch(getApiUrl("/api/users/sync"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: profile.email,
-          name: profile.name,
-          picture: profile.picture,
-        }),
-      });
-    } catch (err) {
-      console.error("Failed to sync user with backend:", err);
-    }
-  };
 
   const setUserProfile = (profile: UserProfile) => {
     setUser(profile);

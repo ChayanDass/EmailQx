@@ -1,14 +1,8 @@
 import { Request, Response } from "express";
 import { z } from "zod";
 import { prisma } from "../config/prisma";
-import { scheduleEmailJob, cancelEmailJob, rescheduleEmailJob, emailQueue } from "../queue/email.queue";
-import { redisClient } from "../config/redis";
-import {
-  MAX_EMAILS_PER_HOUR_PER_SENDER,
-  MAX_EMAILS_PER_HOUR_GLOBAL,
-  MIN_EMAIL_DELAY_MS,
-} from "../services/rateLimiter.service";
-import { WORKER_CONCURRENCY } from "../queue/email.worker";
+import { scheduleEmailJob, cancelEmailJob, rescheduleEmailJob } from "../queue/email.queue";
+import { getUserIdentity } from "../utils/auth.util";
 
 const ScheduleEmailSchema = z.object({
   senderEmail: z.string().email().optional().default("sender1@reachinbox.ai"),
@@ -23,7 +17,7 @@ const ScheduleEmailSchema = z.object({
       z.object({
         name: z.string(),
         type: z.string(),
-        data: z.string(), // base64
+        data: z.string(),
       })
     )
     .optional()
@@ -35,45 +29,6 @@ const RescheduleEmailSchema = z.object({
     message: "Invalid date format for scheduledAt",
   }),
 });
-
-// Helper to extract user info from request headers
-function getUserIdentity(req: Request) {
-  const emailHeader = (req.headers["x-user-email"] as string) || (req.query.userEmail as string);
-  const nameHeader = (req.headers["x-user-name"] as string) || (req.query.userName as string);
-  return {
-    userEmail: emailHeader ? emailHeader.toLowerCase().trim() : undefined,
-    userName: nameHeader ? nameHeader.trim() : undefined,
-  };
-}
-
-export async function syncUser(req: Request, res: Response): Promise<void> {
-  try {
-    const { email, name, picture } = req.body;
-    if (!email) {
-      res.status(400).json({ error: "Email is required" });
-      return;
-    }
-
-    const cleanEmail = email.toLowerCase().trim();
-    const user = await prisma.user.upsert({
-      where: { email: cleanEmail },
-      update: {
-        name: name || undefined,
-        picture: picture || undefined,
-      },
-      create: {
-        email: cleanEmail,
-        name: name || cleanEmail.split("@")[0],
-        picture,
-      },
-    });
-
-    res.json({ message: "User synced successfully", user });
-  } catch (error: any) {
-    console.error("[Controller] Error syncing user:", error);
-    res.status(500).json({ error: "Failed to sync user", details: error.message || "Internal server error" });
-  }
-}
 
 export async function scheduleEmail(req: Request, res: Response): Promise<void> {
   try {
@@ -98,7 +53,6 @@ export async function scheduleEmail(req: Request, res: Response): Promise<void> 
       userId = user.id;
     }
 
-    // Create DB record isolated by user
     const email = await prisma.email.create({
       data: {
         userId,
@@ -113,7 +67,6 @@ export async function scheduleEmail(req: Request, res: Response): Promise<void> 
       },
     });
 
-    // Enqueue job in BullMQ
     await scheduleEmailJob(email.id, scheduledDate);
 
     res.status(201).json({
@@ -121,7 +74,7 @@ export async function scheduleEmail(req: Request, res: Response): Promise<void> 
       email,
     });
   } catch (error: any) {
-    console.error("[Controller] Error scheduling email:", error);
+    console.error("[EmailController] Error scheduling email:", error);
     res.status(500).json({ error: "Failed to schedule email", details: error.message || "Internal server error" });
   }
 }
@@ -136,7 +89,6 @@ export async function listEmails(
 
     const whereClause: any = {};
 
-    // Isolate by user if userEmail header or query is present
     if (userEmail) {
       whereClause.userEmail = userEmail;
     }
@@ -175,7 +127,7 @@ export async function listEmails(
       offset: skip,
     });
   } catch (error: any) {
-    console.error("[Controller] Error listing emails:", error);
+    console.error("[EmailController] Error listing emails:", error);
     res.status(500).json({ error: "Failed to fetch emails", details: error.message || "Internal server error" });
   }
 }
@@ -194,7 +146,7 @@ export async function getEmailById(req: Request<{ id: string }>, res: Response):
 
     res.json({ email });
   } catch (error: any) {
-    console.error("[Controller] Error getting email:", error);
+    console.error("[EmailController] Error getting email:", error);
     res.status(500).json({ error: "Failed to fetch email", details: error.message || "Internal server error" });
   }
 }
@@ -233,7 +185,7 @@ export async function cancelEmail(req: Request<{ id: string }>, res: Response): 
       email: updatedEmail,
     });
   } catch (error: any) {
-    console.error("[Controller] Error cancelling email:", error);
+    console.error("[EmailController] Error cancelling email:", error);
     res.status(500).json({ error: "Failed to cancel email", details: error.message || "Internal server error" });
   }
 }
@@ -279,85 +231,7 @@ export async function rescheduleEmail(req: Request<{ id: string }>, res: Respons
       email: updatedEmail,
     });
   } catch (error: any) {
-    console.error("[Controller] Error rescheduling email:", error);
+    console.error("[EmailController] Error rescheduling email:", error);
     res.status(500).json({ error: "Failed to reschedule email", details: error.message || "Internal server error" });
-  }
-}
-
-export async function getStats(req: Request, res: Response): Promise<void> {
-  try {
-    const { userEmail } = getUserIdentity(req);
-    const userWhere = userEmail ? { userEmail } : {};
-
-    const [scheduledCount, sentCount, failedCount, cancelledCount, totalCount] = await Promise.all([
-      prisma.email.count({ where: { ...userWhere, status: "SCHEDULED" } }),
-      prisma.email.count({ where: { ...userWhere, status: "SENT" } }),
-      prisma.email.count({ where: { ...userWhere, status: "FAILED" } }),
-      prisma.email.count({ where: { ...userWhere, status: "CANCELLED" } }),
-      prisma.email.count({ where: userWhere }),
-    ]);
-
-    const nextUpcoming = await prisma.email.findFirst({
-      where: { ...userWhere, status: "SCHEDULED" },
-      orderBy: { scheduledAt: "asc" },
-    });
-
-    res.json({
-      stats: {
-        scheduled: scheduledCount,
-        sent: sentCount,
-        failed: failedCount,
-        cancelled: cancelledCount,
-        total: totalCount,
-      },
-      nextUpcoming,
-    });
-  } catch (error: any) {
-    console.error("[Controller] Error fetching stats:", error);
-    res.status(500).json({ error: "Failed to fetch stats", details: error.message || "Internal server error" });
-  }
-}
-
-export async function getHealth(_req: Request, res: Response): Promise<void> {
-  try {
-    let redisConnected = false;
-    try {
-      const ping = await redisClient.ping();
-      redisConnected = ping === "PONG";
-    } catch {
-      redisConnected = false;
-    }
-
-    let dbConnected = false;
-    try {
-      await prisma.$queryRaw`SELECT 1`;
-      dbConnected = true;
-    } catch {
-      dbConnected = false;
-    }
-
-    const delayedJobCount = await emailQueue.getDelayedCount();
-    const activeJobCount = await emailQueue.getActiveCount();
-
-    res.json({
-      status: redisConnected && dbConnected ? "ok" : "degraded",
-      timestamp: new Date().toISOString(),
-      services: {
-        redis: redisConnected ? "connected" : "disconnected",
-        database: dbConnected ? "connected" : "disconnected",
-      },
-      queue: {
-        delayedJobs: delayedJobCount,
-        activeJobs: activeJobCount,
-      },
-      config: {
-        workerConcurrency: WORKER_CONCURRENCY,
-        minEmailDelayMs: MIN_EMAIL_DELAY_MS,
-        maxEmailsPerHourPerSender: MAX_EMAILS_PER_HOUR_PER_SENDER,
-        maxEmailsPerHourGlobal: MAX_EMAILS_PER_HOUR_GLOBAL,
-      },
-    });
-  } catch (error: any) {
-    res.status(500).json({ status: "error", details: error.message || "Internal server error" });
   }
 }
