@@ -1,0 +1,43 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  picture   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  emails    Email[]
+}
+
+model Email {
+  id                 String   @id @default(uuid())
+  userId             String?
+  user               User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userEmail          String?
+  senderEmail        String   @default("sender1@reachinbox.ai")
+  recipient          String
+  subject            String
+  body               String
+  scheduledAt        DateTime
+  sentAt             DateTime?
+  status             String   @default("SCHEDULED")
+  etherealPreviewUrl String?
+  errorReason        String?
+  attachments        String?  @default("[]")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([status])
+  @@index([userEmail])
+  @@index([scheduledAt])
+  @@index([userEmail, status])
+  @@index([status, scheduledAt])
+}
