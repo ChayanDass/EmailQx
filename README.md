@@ -303,8 +303,11 @@ This URL is stored in the database and shown as a clickable link in the dashboar
 |---|---|---|
 | `PORT` | `4000` | Express server port |
 | `DATABASE_URL` | — | PostgreSQL connection string |
+| `REDIS_URL` | — | Full Redis connection URI (e.g., `rediss://default:TOKEN@trusted-racer-156419.upstash.io:6379`) |
 | `REDIS_HOST` | `127.0.0.1` | Redis hostname |
 | `REDIS_PORT` | `6379` | Redis port |
+| `REDIS_PASSWORD` | — | Redis password/token (required for Upstash Redis) |
+| `REDIS_TLS` | `false` | Enable TLS/SSL connection (`true` for Upstash, auto-detected for `upstash.io`) |
 | `WORKER_CONCURRENCY` | `5` | Parallel jobs per worker |
 | `MIN_EMAIL_DELAY_MS` | `1000` | Minimum delay between sends (ms) |
 | `MAX_EMAILS_PER_HOUR_PER_SENDER` | `50` | Hourly send cap per sender |

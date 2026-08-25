@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@prisma/client": "^6.4.1",
+    "@upstash/redis": "^1.38.2",
     "bullmq": "^5.41.6",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
