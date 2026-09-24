@@ -21,7 +21,7 @@ app.use("/api", apiRouter);
 // Root route welcome info
 app.get("/", (_req, res) => {
   res.json({
-    service: "ReachInbox Email Scheduler Service",
+    service: "EmailQX Email Scheduler Service",
     status: "running",
     docs: "/api/health",
   });
@@ -34,7 +34,7 @@ async function startServer() {
 
     app.listen(PORT, () => {
       console.log(`=================================================`);
-      console.log(`ReachInbox Email Scheduler API running on port ${PORT}`);
+      console.log(`EmailQX Email Scheduler API running on port ${PORT}`);
       console.log(`Health Check: http://localhost:${PORT}/api/health`);
       console.log(`=================================================`);
     });

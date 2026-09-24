@@ -5,7 +5,7 @@ import { scheduleEmailJob, cancelEmailJob, rescheduleEmailJob } from "../queue/e
 import { getUserIdentity } from "../utils/auth.util";
 
 const ScheduleEmailSchema = z.object({
-  senderEmail: z.string().email().optional().default("sender1@reachinbox.ai"),
+  senderEmail: z.string().email().optional().default("sender1@emailqx.ai"),
   recipient: z.string().email("Invalid email address format"),
   subject: z.string().min(1, "Subject is required"),
   body: z.string().min(1, "Body is required"),

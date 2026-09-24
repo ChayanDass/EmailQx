@@ -1,7 +1,7 @@
 {
-  "name": "reachinbox-scheduler-server",
+  "name": "emailqx-scheduler-server",
   "version": "1.0.0",
-  "description": "Backend service for ReachInbox Email Scheduler built with Express, BullMQ, Redis, Prisma and Nodemailer",
+  "description": "Backend service for EmailQX built with Express, BullMQ, Redis, Prisma and Nodemailer",
   "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",

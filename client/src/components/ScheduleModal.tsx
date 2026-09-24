@@ -40,9 +40,9 @@ interface ScheduleModalProps {
 
 const SENDER_OPTIONS = [
   "oliver.brown@domain.co",
-  "sender1@reachinbox.ai",
-  "sales@reachinbox.ai",
-  "support@reachinbox.ai",
+  "sender1@emailqx.ai",
+  "sales@emailqx.ai",
+  "support@emailqx.ai",
 ];
 
 export const ScheduleModal: React.FC<ScheduleModalProps> = ({

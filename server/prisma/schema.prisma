@@ -22,7 +22,7 @@ model Email {
   userId             String?
   user               User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   userEmail          String?
-  senderEmail        String   @default("sender1@reachinbox.ai")
+  senderEmail        String   @default("sender1@emailqx.ai")
   recipient          String
   subject            String
   body               String

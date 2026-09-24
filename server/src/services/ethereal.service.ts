@@ -47,8 +47,8 @@ export async function sendEmailViaEthereal(options: SendEmailOptions): Promise<S
   const mailTransporter = await getEtherealTransporter();
 
   const fromHeader = options.senderEmail
-    ? `"ReachInbox Sender" <${options.senderEmail}>`
-    : '"ReachInbox Outbox" <outbox@reachinbox.ai>';
+    ? `"EmailQX Sender" <${options.senderEmail}>`
+    : '"EmailQX" <noreply@emailqx.ai>';
 
   const nodemailerAttachments = (options.attachments || []).map((att) => ({
     filename: att.name,
@@ -66,11 +66,11 @@ export async function sendEmailViaEthereal(options: SendEmailOptions): Promise<S
         <div style="max-width: 600px; margin: 0 auto; background: #ffffff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
           <div style="border-bottom: 2px solid #6366f1; padding-bottom: 15px; margin-bottom: 20px;">
             <h2 style="color: #4f46e5; margin: 0;">${options.subject}</h2>
-            <p style="color: #6b7280; font-size: 14px; margin-top: 5px;">From: <strong>${options.senderEmail || "outbox@reachinbox.ai"}</strong></p>
+            <p style="color: #6b7280; font-size: 14px; margin-top: 5px;">From: <strong>${options.senderEmail || "noreply@emailqx.ai"}</strong></p>
           </div>
           <div style="font-size: 16px; line-height: 1.6; white-space: pre-wrap;">${options.body}</div>
           <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0 15px 0;" />
-          <p style="font-size: 12px; color: #9ca3af; text-align: center;">Sent by ReachInbox Scheduler (Ethereal Fake SMTP)</p>
+          <p style="font-size: 12px; color: #9ca3af; text-align: center;">Sent by EmailQX Scheduler (Ethereal Fake SMTP)</p>
         </div>
       </div>
     `,
