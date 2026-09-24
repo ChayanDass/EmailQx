@@ -1,5 +1,5 @@
 import React from "react";
-import { Clock, Send, Plus } from "lucide-react";
+import { Clock, Send, Plus, Github, Mail } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 interface SidebarProps {
@@ -77,6 +77,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <span className="sidebar-item-badge">{sentCount}</span>
         </li>
       </ul>
+
+      <div className="sidebar-footer">
+        <a
+          className="sidebar-footer-link"
+          href="https://github.com/ChayanDass/EmailQx"
+          target="_blank"
+          rel="noreferrer"
+        >
+          <Github size={15} strokeWidth={2} />
+          Code
+        </a>
+        <a className="sidebar-footer-link" href="mailto:chayandas01@gmail.com" target="_blank" rel="noreferrer">
+          <Mail size={15} strokeWidth={2} />
+          Email
+        </a>
+      </div>
     </aside>
   );
 };
